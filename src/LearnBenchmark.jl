@@ -20,14 +20,14 @@ export bayeserror
 ### Returns
 An estimate of the Bayes error based on ϵ-balls with a chosen number of radii.
 """
-function ensemblelearner(X, L, bound_ratio)
+function ensemblelearner(X, L, bound_ratio, scale=10, offset=1)
     N = [size(data)[2] for data in X]
     d = size(X[1])[1]
     λ = length(N)
 
     prior = N./sum(N)
     ϵ² = chebyshev_roots(L).^2 ./ (N[1] .^(1/d)) 
-    ϵ² = ϵ² / maximum(ϵ²)*10 .+ 1
+    ϵ² = ϵ² / maximum(ϵ²)*scale .+ offset
     @info ϵ²
     weights = chebyshev_weights(L, d)
 
