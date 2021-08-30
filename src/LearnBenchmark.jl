@@ -30,7 +30,6 @@ function ensemblelearner(X, L, bound_ratio, scale=10, offset=1)
     prior = N./sum(N)
     ϵ² = chebyshev_roots(L).^2 ./ (N[1] .^(1/d)) 
     ϵ² = ϵ² / maximum(ϵ²)*scale .+ offset
-    @info ϵ²
     weights = chebyshev_weights(L, d)
 
     ratios = zeros(λ,L)
@@ -102,7 +101,6 @@ function baselearner(X, ϵ², bound_ratio)
     N = [size(data)[2] for data in X]
     d = size(X[1])[1]
     λ = length(N)
-    @info N
 
     prior = N./sum(N)
 
