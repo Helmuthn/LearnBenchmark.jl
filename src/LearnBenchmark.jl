@@ -18,7 +18,7 @@ export bayeserror
  - `bound_ratio`    -   Ratio of density bounds CL/CU
 
 ### Returns
-An estimate of the Bayes error based on ϵ-balls
+An estimate of the Bayes error based on ϵ-balls with a chosen number of radii.
 """
 function ensemblelearner(X, L, bound_ratio)
     N = [size(data)[2] for data in X]
@@ -26,9 +26,10 @@ function ensemblelearner(X, L, bound_ratio)
     λ = length(N)
 
     prior = N./sum(N)
-    ϵ² = chebyshev_roots(L).^2 ./ (N[1] .^(1/d))
+    ϵ² = chebyshev_roots(L).^2 ./ (N[1] .^(1/d)) 
+    ϵ² = ϵ² / maximum(ϵ²)*10 .+ 1
+    @info ϵ²
     weights = chebyshev_weights(L, d)
-    reverse!(weights)
 
     ratios = zeros(λ,L)
     
@@ -48,18 +49,15 @@ function ensemblelearner(X, L, bound_ratio)
                 density_ratio_estimator!(   view(ratios,1:l,k),
                                             center, 
                                             ϵ²[k], 
-                                            view(X[1:l],1:l))
+                                            view(X,1:l))
             end
-
             # Weight Ratios
             weighted_ratios = ratios * weights
 
             # update estimate
-            estimate += tₖ(     prior[1:l], 
-                                weighted_ratios[1:l]) / N[l]
-            #estimate += tₖ_bar( prior[1:l], 
-            #                    weighted_ratios[1:l], 
-            #                    bound_ratio) / N[l]
+            estimate += tₖ_bar( prior[1:l], 
+                                weighted_ratios[1:l], 
+                                bound_ratio) / N[l]
         end
     end
 
@@ -86,6 +84,55 @@ bayeserror(X, L, bound_ratio) = ensemblelearner(X, L, bound_ratio)
 ##################### Weak Learner ######################
 #########################################################
 #########################################################
+
+"""
+    baselearner(X, ϵ², bound_ratio)
+
+### Arguments
+ - `X`              -   Data as an array of λ matrices of shape M × Nᵢ
+ - `ϵ²`             -   Sets radius of ϵ-ball
+ - `bound_ratio`    -   Ratio of density bounds CL/CU
+
+### Returns
+An estimate of the Bayes error based on ϵ-balls with a given radius.
+"""
+function baselearner(X, ϵ², bound_ratio)
+    N = [size(data)[2] for data in X]
+    d = size(X[1])[1]
+    λ = length(N)
+    @info N
+
+    prior = N./sum(N)
+
+    ratios = zeros(λ)
+    
+    estimate = 0
+
+    # For Each Class
+    for l in 2:λ
+
+        # For each datapoint in the class
+        for i in 1:N[l]
+            # Set center of ϵ-ball
+            center = @view X[l][:,i]
+
+            density_ratio_estimator!(   view(ratios,1:l),
+                                        center, 
+                                        ϵ², 
+                                        view(X,1:l))
+
+
+            # update estimate
+            estimate += tₖ_bar( prior[1:l], 
+                                ratios[1:l], 
+                                bound_ratio) / N[l]
+        end
+    end
+
+    return 1 - prior[1] - estimate
+end
+export baselearner
+
 
 """
     countpoints(center, ϵ², dataset)
@@ -170,7 +217,7 @@ Divergence function used in the paper
 function tₖ_bar(prior, data, bound_ratio = 1e-4)
     bound_ratio_array = [bound_ratio for i in 1:length(prior)]
 
-    return max(     tₖ(prior,data),
+    return min(     tₖ(prior,data),
                     tₖ(prior,bound_ratio_array))
 end
 

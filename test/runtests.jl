@@ -24,22 +24,40 @@ using Test
     end
 
     @testset "density_ratio_estimator!" begin
-        data1 = zeros(1,10)
-        data1[1:10] .= 1:10
-        data2 = zeros(1,10)
-        data2[1:10] = 1:10
-        dataset = [data1, data2]
+        @testset "1D" begin
+            data1 = zeros(1,10)
+            data1[1:10] .= 1:10
+            data2 = zeros(1,10)
+            data2[1:10] = 1:10
+            dataset = [data1, data2]
 
-        ratios = zeros(2)
-        center = [3]
-        LearnBenchmark.density_ratio_estimator!(ratios,center, 1.5, dataset)
-        @test ratios[1] ≈ 1
+            ratios = zeros(2)
+            center = [3]
+            LearnBenchmark.density_ratio_estimator!(ratios,center, 1.5, dataset)
+            @test ratios[1] ≈ 1
 
-        data2[1:10] = 1:.5:5.5
-        dataset = [data1, data2]
-        ratios = zeros(2)
-        LearnBenchmark.density_ratio_estimator!(ratios,center, 1.6^2, dataset)
-        @test ratios[1] ≈ 3/7
+            data2[1:10] = 1:.5:5.5
+            dataset = [data1, data2]
+            ratios = zeros(2)
+            LearnBenchmark.density_ratio_estimator!(ratios,center, 1.6^2, dataset)
+            @test ratios[1] ≈ 3/7
+        end
+        @testset "2D" begin
+            data1 = zeros(2,100)
+            data2 = zeros(2,100)
+            data1[1,:] = repeat(1:10,10)
+            data1[2,:] = repeat(1:10,inner=10)
+            data2[1,:] = repeat(.5:.5:5,10)
+            data2[2,:] = repeat(.5:.5:5,inner=10)
+            dataset = [data1, data2]
+
+            ratios = zeros(2)
+            center = [2,2]
+            ϵ = 1.1
+            LearnBenchmark.density_ratio_estimator!(ratios,center,ϵ^2,dataset)
+            @test ratios[1] ≈ 5/13
+
+        end
     end
 
     @testset "Chebyshev Polynomials" begin
@@ -62,10 +80,26 @@ using Test
         end
 
         @testset "chebyshev_weights" begin
-            @test sum(LearnBenchmark.chebyshev_weights(5,2)) ≈ 1
-            weight_test = LearnBenchmark.chebyshev_weights(6,3)
-            root_test = LearnBenchmark.chebyshev_roots(6)
-            @test sum(weight_test .* root_test) ≈ 0 atol=1e-14
+            @testset "Constraints" begin
+                @test sum(LearnBenchmark.chebyshev_weights(5,2)) ≈ 1
+
+                d=4
+                L=6
+                weight_test = LearnBenchmark.chebyshev_weights(L,d)
+                root_test = LearnBenchmark.chebyshev_roots(L)
+                for i = 1:d
+                    @test sum(weight_test .* root_test.^i) ≈ 0 atol=1e-14
+                end
+            end
+        end
+    end
+    
+
+    @testset "tₖ" begin
+        @testset "Even Prior 2 variables" begin
+            prior = [0.5, 0.5]
+            data =  [0.5, 10]
+            @test LearnBenchmark.tₖ(prior,data) == (1 - data[1])/2
         end
     end
 
