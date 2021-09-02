@@ -33,11 +33,22 @@ set of the given `cardinality`.
  - `cardinality` - Cardinality of output hash
  - `b`           - Shift of input
  - `ϵ`           - Input Scaling
- - `maxvalue`    - maximum value of function input 
+ - `maxvalue`    - maximum value of function input for each dimension
 
 ### Defined Function Definition
     
     (h::FiniteHashBlock)(x)
+
+### Example Usage
+
+    cardinality = 2
+    b = 0
+    ϵ = 1
+    maxvalue = 1
+    h = FiniteHashBlock(cardinality, b, ϵ, maxvalue)
+
+    hashed = h(rand())
+    @test hashed == 1 || hashed == 2
 """
 struct FiniteHashBlock
     cardinality::Integer
@@ -46,15 +57,15 @@ struct FiniteHashBlock
     indexmap::Array{Integer}
     
     function FiniteHashBlock(cardinality,b,ϵ,maxvalue)
-        maxint = hashblock(maxvalue,b,ϵ)
-        indexmap = rand(1:cardinality,maxint)
+        maxargs = map((x) -> hashblock(x,b,ϵ), maxvalue)
+        indexmap = rand(1:cardinality,maxargs...)
         
-        return new(cardinality,b,ϵ,indexmap)
+        return new(cardinality, b, ϵ, indexmap)
     end
 end
 
 function (h::FiniteHashBlock)(x)
-    return h.indexmap[hashblock(x,h.b,h.ϵ)]
+    return h.indexmap[hashblock(x,h.b,h.ϵ)...]
 end
 
 
