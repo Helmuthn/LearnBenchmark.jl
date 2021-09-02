@@ -5,6 +5,61 @@ export bayeserror
 
 #########################################################
 #########################################################
+################### Hash Map Scheme #####################
+#########################################################
+#########################################################
+
+"""
+    hashblock(x, b, ϵ)::Integer
+
+Converts a scalar `x` to an integer through `floor((x+b)/ϵ)`
+"""
+function hashblock(x, b, ϵ)::Integer
+    return floor((x + b)/ϵ)
+end
+
+"""
+    FiniteHashBlock
+
+Functor defining the randomized hashmap.
+Defined function returns H(floor((x+b)/ϵ)),
+where H is a random map from integers to a 
+set of the given `cardinality`.
+
+### Constructor
+
+    FiniteHashBlock(cardinality,b,ϵ,maxvalue)
+
+ - `cardinality` - Cardinality of output hash
+ - `b`           - Shift of input
+ - `ϵ`           - Input Scaling
+ - `maxvalue`    - maximum value of function input 
+
+### Defined Function Definition
+    
+    (h::FiniteHashBlock)(x)
+"""
+struct FiniteHashBlock
+    cardinality::Integer
+    b::Real
+    ϵ::Real
+    indexmap::Array{Integer}
+    
+    function FiniteHashBlock(cardinality,b,ϵ,maxvalue)
+        maxint = hashblock(maxvalue,b,ϵ)
+        indexmap = rand(1:cardinality,maxint)
+        
+        return new(cardinality,b,ϵ,indexmap)
+    end
+end
+
+function (h::FiniteHashBlock)(x)
+    return h.indexmap[hashblock(x,h.b,h.ϵ)]
+end
+
+
+#########################################################
+#########################################################
 ################# Ensemble Learner ######################
 #########################################################
 #########################################################

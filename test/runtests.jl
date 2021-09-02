@@ -104,4 +104,24 @@ using Test
     end
 
 
+    @testset "hashmap" begin
+        @testset "hashblock" begin
+            x = 1
+            b = 0
+            ϵ = 1
+            @test LearnBenchmark.hashblock(x,b,ϵ) == x
+
+            x = 1
+            b = 0
+            ϵ = 0.1
+            @test LearnBenchmark.hashblock(x,b,ϵ) == 10
+
+            x = 1
+            b = 1
+            ϵ = 0.099
+            @test LearnBenchmark.hashblock(x,b,ϵ) == 20
+        end
+    end
+
+
 end
