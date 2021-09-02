@@ -73,11 +73,13 @@ end
  - `X`              -   Data as an array of λ matrices of shape M × Nᵢ
  - `L`              -   Number of ϵ-balls
  - `bound_ratio`    -   Ratio of density bounds CL/CU
+ - `scale`          -   Scaling for radii
+ - `offset`         -   Offset for radii
 
 ### Returns
 An estimate of the Bayes error based on ϵ-balls
 """
-bayeserror(X, L, bound_ratio) = ensemblelearner(X, L, bound_ratio)
+bayeserror(X, L, bound_ratio, scale=10, offset=1) = ensemblelearner(X, L, bound_ratio, scale, offset)
 
 
 #########################################################
