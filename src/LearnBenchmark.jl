@@ -44,7 +44,7 @@ set of the given `cardinality`.
     cardinality = 2
     b = 0
     ϵ = 1
-    maxvalue = 1
+    maxvalue = 10
     h = FiniteHashBlock(cardinality, b, ϵ, maxvalue)
 
     hashed = h(rand())
@@ -67,6 +67,36 @@ end
 function (h::FiniteHashBlock)(x)
     return h.indexmap[hashblock(x,h.b,h.ϵ)...]
 end
+
+"""
+    countpoints_hash(X, h::FiniteHashBlock)
+
+Count the number of points that occur in each hash bin
+for each given class of data.
+
+### Arguments
+ - `X` - Array of Arrays of datapoints
+ - `h` - Hash function 
+
+### Returns
+A matrix of dimensionality `size(X)[1]` × `h.cardinality`, where each column
+corresponds to the count of datapoints for each class in a given bin. 
+"""
+function countpoints_hash(X, h::FiniteHashBlock)
+    out = zeros(size(X)[1],h.cardinality)
+    
+    for class in 1:size(X)[1]
+        dataset = X[1]
+        for i in 1:size(dataset)[2]
+            out[class, h(X[:,i])] += 1
+        end
+    end
+
+    return out
+end
+
+
+
 
 
 #########################################################
